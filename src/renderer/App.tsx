@@ -5,15 +5,29 @@ import Settings from './components/Settings';
 import MailSummary from './components/MailSummary';
 import StyleConverter from './components/StyleConverter';
 
-// テーマの作成
+// オレンジ色のテーマを作成
 const theme = createTheme({
   palette: {
-    mode: 'light',
     primary: {
-      main: '#1976d2',
+      main: '#FF9800', // オレンジ色
+      light: '#FFB74D',
+      dark: '#F57C00',
+      contrastText: '#fff',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#FF5722', // 濃いオレンジ色
+      light: '#FF8A65',
+      dark: '#E64A19',
+      contrastText: '#fff',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
     },
   },
 });

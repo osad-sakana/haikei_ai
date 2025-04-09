@@ -14,7 +14,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { ContentCopy } from '@mui/icons-material';
+import { ContentCopy, Summarize, Email } from '@mui/icons-material';
 
 // Electronオブジェクトの型定義
 declare global {
@@ -141,9 +141,12 @@ const MailSummary: React.FC = () => {
         flexDirection: 'column',
         p: { xs: 2, md: 4 },
       }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          メール要約
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+          <Email color="primary" />
+          <Typography variant="h5" component="h2">
+            メール要約
+          </Typography>
+        </Stack>
         <Box sx={{ 
           flex: 1,
           display: 'flex',
@@ -169,8 +172,9 @@ const MailSummary: React.FC = () => {
               color="primary"
               onClick={handleSummarize}
               disabled={loading || !inputText.trim()}
+              startIcon={loading ? <CircularProgress size={20} /> : <Summarize />}
             >
-              {loading ? <CircularProgress size={24} /> : '要約する'}
+              要約する
             </Button>
           </Box>
           
@@ -180,9 +184,12 @@ const MailSummary: React.FC = () => {
               position: 'relative',
             }}>
               <Paper variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  要約結果
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <Summarize color="primary" />
+                  <Typography variant="h6">
+                    要約結果
+                  </Typography>
+                </Stack>
                 <Typography
                   component="div"
                   sx={{ 

@@ -18,19 +18,13 @@ AIを活用したメール要約・文体変換アプリケーション
 
 1. リポジトリをクローン
 ```bash
-git clone https://github.com/your-username/haikei_ai.git
+git clone https://github.com/osad-sakana/haikei_ai.git
 cd haikei_ai
 ```
 
 2. 依存関係のインストール
 ```bash
 npm install
-```
-
-3. 環境変数の設定
-`.env`ファイルを作成し、以下の内容を追加：
-```
-OPENAI_API_KEY=your_api_key_here
 ```
 
 ## 使用方法
@@ -50,6 +44,10 @@ npm run build
 npm start
 ```
 
+4. APIキーの設定
+- アプリケーション起動後、設定画面からOpenAI APIキーを入力
+- APIキーは安全に保存され、次回起動時も保持されます
+
 ## エラーハンドリング
 
 アプリケーションは以下のエラーを適切に処理します：
@@ -68,6 +66,9 @@ npm start
 
 ### StyleConverter
 入力されたテキストをビジネスメール形式に変換します。
+
+### Settings
+OpenAI APIキーの設定と管理を行います。
 
 ## 技術スタック
 

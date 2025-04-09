@@ -9,10 +9,11 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Grid,
+  Stack,
   IconButton,
   useTheme,
   useMediaQuery,
+  Grid,
 } from '@mui/material';
 import { ContentCopy, ArrowForward } from '@mui/icons-material';
 
@@ -50,14 +51,56 @@ const StyleConverter: React.FC = () => {
 
     setLoading(true);
     try {
-      const electron = window.electron || mockElectron;
-      const result = await electron.convertStyle(inputText);
+      let result: string;
+      
+      // 実際のElectron APIまたはフェッチAPIを使う
+      if (window.electron) {
+        // Electronの場合
+        result = await window.electron.convertStyle(inputText);
+      } else {
+        // 開発モードの場合は直接APIを呼び出す
+        const apiKey = localStorage.getItem('apiKey');
+        if (!apiKey) {
+          throw new Error('APIキーが設定されていません。設定画面からAPIキーを設定してください。');
+        }
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: 'あなたは文体変換を専門とするAIアシスタントです。与えられたテキストを丁寧なビジネス文書の文体に変換してください。必ず「お世話になっております。〜です。」という挨拶で文章を始め、末尾は「よろしくお願いします。」で締めるようにしてください。'
+              },
+              {
+                role: 'user',
+                content: inputText
+              }
+            ],
+            temperature: 0.7,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'APIリクエストに失敗しました');
+        }
+        
+        const data = await response.json();
+        result = data.choices[0].message.content;
+      }
+      
       setConvertedText(result);
     } catch (error) {
       console.error('文体の変換に失敗しました', error);
       setSnackbar({
         open: true,
-        message: '文体の変換に失敗しました',
+        message: error instanceof Error ? error.message : '文体の変換に失敗しました',
         severity: 'error',
       });
     } finally {
@@ -101,33 +144,39 @@ const StyleConverter: React.FC = () => {
         <Typography variant="h5" component="h2" gutterBottom>
           文体変換
         </Typography>
-        <Grid container spacing={3} sx={{ 
+        <Box sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3,
           flex: 1,
           mt: 2,
-          height: '100%',
         }}>
-          <Grid item xs={12} md={5} sx={{ height: '100%' }}>
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={isMobile ? 6 : 12}
-                label="変換前のテキスト"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="箇条書きで入力してください"
-                helperText="箇条書きで入力すると、より自然な変換結果が得られます"
-                sx={{ flex: 1 }}
-              />
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={2} sx={{ 
+          <Box sx={{ 
+            flex: 1, 
             display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            flexDirection: isMobile ? 'row' : 'column',
-            gap: 2,
+            flexDirection: 'column',
+            width: { xs: '100%', md: '40%' },
           }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={isMobile ? 6 : 12}
+              label="変換前のテキスト"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="箇条書きで入力してください"
+              helperText="箇条書きで入力すると、より自然な変換結果が得られます"
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          
+          <Stack
+            direction={isMobile ? 'row' : 'column'}
+            alignItems="center"
+            justifyContent="center"
+            spacing={2}
+            sx={{ py: 2 }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -145,40 +194,40 @@ const StyleConverter: React.FC = () => {
               color: 'primary.main',
               transform: isMobile ? 'rotate(90deg)' : 'none',
             }} />
-          </Grid>
-          <Grid item xs={12} md={5} sx={{ height: '100%' }}>
-            <Box sx={{ 
-              height: '100%', 
-              display: 'flex', 
-              flexDirection: 'column',
-              position: 'relative',
-            }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={isMobile ? 6 : 12}
-                label="変換後のテキスト"
-                value={convertedText}
-                InputProps={{
-                  readOnly: true,
+          </Stack>
+          
+          <Box sx={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column',
+            position: 'relative',
+            width: { xs: '100%', md: '40%' },
+          }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={isMobile ? 6 : 12}
+              label="変換後のテキスト"
+              value={convertedText}
+              InputProps={{
+                readOnly: true,
+              }}
+              sx={{ flex: 1 }}
+            />
+            {convertedText && (
+              <IconButton
+                onClick={handleCopy}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
                 }}
-                sx={{ flex: 1 }}
-              />
-              {convertedText && (
-                <IconButton
-                  onClick={handleCopy}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                  }}
-                >
-                  <ContentCopy />
-                </IconButton>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
+              >
+                <ContentCopy />
+              </IconButton>
+            )}
+          </Box>
+        </Box>
       </Paper>
       <Snackbar
         open={snackbar.open}

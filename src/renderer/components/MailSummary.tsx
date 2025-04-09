@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Electron, mockElectron } from '../types';
+import { openAIService } from '../services/openai';
 import {
   Box,
   Paper,
@@ -25,7 +25,7 @@ declare global {
 
 const MailSummary: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [inputText, setInputText] = useState<string>('');
   const [summary, setSummary] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -51,56 +51,24 @@ const MailSummary: React.FC = () => {
 
     setLoading(true);
     try {
-      let result: string;
-      
-      // 実際のElectron APIまたはフェッチAPIを使う
-      if (window.electron) {
-        // Electronの場合
-        result = await window.electron.summarizeMail(inputText);
-      } else {
-        // 開発モードの場合は直接APIを呼び出す
-        const apiKey = localStorage.getItem('apiKey');
-        if (!apiKey) {
-          throw new Error('APIキーが設定されていません。設定画面からAPIキーを設定してください。');
-        }
-        
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: [
-              {
-                role: 'system',
-                content: 'あなたはメールの要約を専門とするAIアシスタントです。与えられたメールの内容を簡潔に要約し、重要なポイントとアクションアイテムを箇条書きで抽出してください。'
-              },
-              {
-                role: 'user',
-                content: inputText
-              }
-            ],
-            temperature: 0.7,
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || 'APIリクエストに失敗しました');
-        }
-        
-        const data = await response.json();
-        result = data.choices[0].message.content;
-      }
-      
+      const prompts = [
+        {
+          role: 'system' as const,
+          content: 'あなたはメールの要約を専門とするAIアシスタントです。与えられたメールの内容を簡潔に要約してください。',
+        },
+        {
+          role: 'user' as const,
+          content: inputText,
+        },
+      ];
+
+      const result = await openAIService.generateText(prompts);
       setSummary(result);
     } catch (error) {
-      console.error('要約の生成に失敗しました', error);
+      console.error('Failed to summarize:', error);
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : '要約の生成に失敗しました',
+        message: '要約の生成に失敗しました',
         severity: 'error',
       });
     } finally {
@@ -108,20 +76,22 @@ const MailSummary: React.FC = () => {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(summary).then(() => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(summary);
       setSnackbar({
         open: true,
-        message: '要約結果をコピーしました',
+        message: '要約をクリップボードにコピーしました',
         severity: 'success',
       });
-    }).catch(() => {
+    } catch (error) {
+      console.error('Failed to copy:', error);
       setSnackbar({
         open: true,
         message: 'コピーに失敗しました',
         severity: 'error',
       });
-    });
+    }
   };
 
   const handleCloseSnackbar = () => {

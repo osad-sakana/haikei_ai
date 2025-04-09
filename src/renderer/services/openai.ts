@@ -1,4 +1,6 @@
 import { Electron, mockElectron } from '../types';
+import { apiKeyManager } from './apiKeyManager';
+import { createAppError, getErrorMessage } from '../utils/errorHandler';
 
 const electron: Electron = window.electron || mockElectron;
 
@@ -8,10 +10,14 @@ interface OpenAIConfig {
 }
 
 interface OpenAIPrompt {
-  role: 'system' | 'user' | 'assistant';
+  role: 'system' | 'user';
   content: string;
 }
 
+/**
+ * OpenAIサービス
+ * APIキーの管理とテキスト生成を担当
+ */
 class OpenAIService {
   private config: OpenAIConfig = {
     apiKey: '',
@@ -22,9 +28,12 @@ class OpenAIService {
     this.loadConfig();
   }
 
+  /**
+   * 設定を読み込む
+   */
   private async loadConfig() {
     try {
-      const savedApiKey = await electron.store.get('openaiApiKey');
+      const savedApiKey = await apiKeyManager.getApiKey();
       if (savedApiKey) {
         this.config.apiKey = savedApiKey;
       }
@@ -33,11 +42,26 @@ class OpenAIService {
     }
   }
 
+  /**
+   * APIキーを設定する
+   * @param apiKey - 設定するAPIキー
+   */
   public async setApiKey(apiKey: string) {
-    this.config.apiKey = apiKey;
-    await electron.store.set('openaiApiKey', apiKey);
+    try {
+      await apiKeyManager.saveApiKey(apiKey);
+      this.config.apiKey = apiKey;
+    } catch (error) {
+      const appError = createAppError(error);
+      console.error('Failed to set API key:', appError);
+      throw new Error(getErrorMessage(appError));
+    }
   }
 
+  /**
+   * テキストを生成する
+   * @param prompts - プロンプトの配列
+   * @returns 生成されたテキスト
+   */
   public async generateText(prompts: OpenAIPrompt[]): Promise<string> {
     if (!this.config.apiKey) {
       throw new Error('OpenAI API key is not set');
@@ -68,8 +92,9 @@ class OpenAIService {
         return await electron.openai.generateText(prompts);
       }
     } catch (error) {
-      console.error('OpenAI API error:', error);
-      throw error;
+      const appError = createAppError(error);
+      console.error('OpenAI API error:', appError);
+      throw new Error(getErrorMessage(appError));
     }
   }
 }

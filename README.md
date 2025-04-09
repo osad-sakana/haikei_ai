@@ -46,7 +46,16 @@ npm start
 
 4. APIキーの設定
 - アプリケーション起動後、設定画面からOpenAI APIキーを入力
-- APIキーは安全に保存され、次回起動時も保持されます
+- APIキーはOSのネイティブなキーチェーンに安全に保存されます
+  - macOS: Keychain
+  - Windows: Credential Manager
+  - Linux: libsecret
+
+## セキュリティ
+
+- APIキーは暗号化されてOSのネイティブなキーチェーンに保存されます
+- 平文での保存を避け、より安全な管理を実現しています
+- キーチェーンへのアクセスには適切な権限が必要です
 
 ## エラーハンドリング
 
@@ -68,7 +77,7 @@ npm start
 入力されたテキストをビジネスメール形式に変換します。
 
 ### Settings
-OpenAI APIキーの設定と管理を行います。
+OpenAI APIキーの設定と管理を行います。キーは安全に保存されます。
 
 ## 技術スタック
 
@@ -77,6 +86,7 @@ OpenAI APIキーの設定と管理を行います。
 - TypeScript
 - Material-UI
 - OpenAI API
+- keytar (セキュアなAPIキー管理)
 
 ## ライセンス
 

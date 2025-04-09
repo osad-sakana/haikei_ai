@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Electron, mockElectron } from '../types';
 import { openAIService } from '../services/openai';
+import { createAppError, getErrorMessage } from '../utils/errorHandler';
 import {
   Box,
   Paper,
@@ -14,8 +14,10 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const electron: Electron = window.electron || mockElectron;
-
+/**
+ * 設定コンポーネント
+ * OpenAI APIキーの設定と管理を行います
+ */
 const Settings: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -28,15 +30,16 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const loadApiKey = async () => {
       try {
-        const savedApiKey = await electron.store.get('openaiApiKey');
+        const savedApiKey = await openAIService.getApiKey();
         if (savedApiKey) {
           setApiKey(savedApiKey);
         }
       } catch (error) {
-        console.error('Failed to load API key:', error);
+        const appError = createAppError(error);
+        console.error('Failed to load API key:', appError);
         setSnackbar({
           open: true,
-          message: 'APIキーの読み込みに失敗しました',
+          message: getErrorMessage(appError),
           severity: 'error',
         });
       }
@@ -45,6 +48,9 @@ const Settings: React.FC = () => {
     loadApiKey();
   }, []);
 
+  /**
+   * APIキーを保存する
+   */
   const handleSave = async () => {
     try {
       await openAIService.setApiKey(apiKey);
@@ -54,39 +60,35 @@ const Settings: React.FC = () => {
         severity: 'success',
       });
     } catch (error) {
-      console.error('Failed to save API key:', error);
+      const appError = createAppError(error);
+      console.error('Failed to save API key:', appError);
       setSnackbar({
         open: true,
-        message: 'APIキーの保存に失敗しました',
+        message: getErrorMessage(appError),
         severity: 'error',
       });
     }
   };
 
+  /**
+   * スナックバーを閉じる
+   */
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
   return (
-    <Box sx={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      p: { xs: 2, md: 4 },
-    }}>
-      <Paper elevation={3} sx={{ 
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        p: { xs: 2, md: 4 },
-      }}>
-        <Typography variant="h5" component="h2" gutterBottom>
+    <Box sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
           設定
         </Typography>
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            OpenAI APIキー
+          </Typography>
           <TextField
             fullWidth
-            label="OpenAI API Key"
             type={showApiKey ? 'text' : 'password'}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
@@ -106,9 +108,8 @@ const Settings: React.FC = () => {
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="contained"
-              color="primary"
               onClick={handleSave}
-              disabled={!apiKey}
+              disabled={!apiKey.trim()}
             >
               保存
             </Button>

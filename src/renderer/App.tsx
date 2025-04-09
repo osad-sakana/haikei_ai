@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, C
 import Settings from './components/Settings';
 import MailSummary from './components/MailSummary';
 import StyleConverter from './components/StyleConverter';
+import Home from './components/Home';
 
 // オレンジ色のテーマを作成
 const theme = createTheme({
@@ -44,6 +45,9 @@ const App: React.FC = () => {
                 Haikei AI
               </Typography>
               <Button color="inherit" component={Link} to="/">
+                ホーム
+              </Button>
+              <Button color="inherit" component={Link} to="/mail-summary">
                 メール要約
               </Button>
               <Button color="inherit" component={Link} to="/style-converter">
@@ -56,10 +60,10 @@ const App: React.FC = () => {
           </AppBar>
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/mail-summary" element={<MailSummary />} />
               <Route path="/style-converter" element={<StyleConverter />} />
-              <Route path="/" element={<MailSummary />} />
             </Routes>
           </Container>
         </Box>

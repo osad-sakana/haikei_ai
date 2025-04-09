@@ -1,0 +1,55 @@
+{
+  "name": "haikei_ai",
+  "version": "1.0.0",
+  "description": "AI-powered email summarization and style conversion application",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "dev": "concurrently \"npm run watch\" \"npm run dev:renderer\" \"npm run start\"",
+    "build": "tsc && npm run build:renderer",
+    "watch": "tsc -w",
+    "dev:renderer": "vite",
+    "build:renderer": "vite build",
+    "package": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.0.1",
+    "@mui/material": "^7.0.1",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/react-router-dom": "^5.3.3",
+    "electron": "^25.0.0",
+    "electron-store": "^8.1.0",
+    "openai": "^4.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react-router-dom": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "concurrently": "^8.0.0",
+    "cross-env": "^7.0.3",
+    "electron-builder": "^24.0.0",
+    "vite": "^4.0.0"
+  },
+  "build": {
+    "appId": "com.haikeiai.app",
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

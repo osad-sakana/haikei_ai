@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Electron } from '../types';
+import { Electron, mockElectron } from '../types';
 import {
   Box,
   Paper,
@@ -10,6 +10,7 @@ import {
   Snackbar,
   IconButton,
   InputAdornment,
+  Chip,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
@@ -34,10 +35,11 @@ const mockStore = {
 const Settings: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
+  const [isApiKeySet, setIsApiKeySet] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'info';
   }>({
     open: false,
     message: '',
@@ -47,11 +49,11 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const loadApiKey = async () => {
       try {
-        if (window.electron) {
-          const savedApiKey = await window.electron.store.get('apiKey');
-          if (savedApiKey) {
-            setApiKey(savedApiKey);
-          }
+        const electron = window.electron || mockElectron;
+        const savedApiKey = await electron.store.get('apiKey');
+        if (savedApiKey) {
+          setApiKey(savedApiKey);
+          setIsApiKeySet(true);
         }
       } catch (error) {
         console.error('APIキーの読み込みに失敗しました', error);
@@ -68,20 +70,32 @@ const Settings: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      if (window.electron) {
-        await window.electron.store.set('apiKey', apiKey);
-        setSnackbar({
-          open: true,
-          message: 'APIキーを保存しました',
-          severity: 'success',
-        });
-      }
+      const electron = window.electron || mockElectron;
+      await electron.store.set('apiKey', apiKey);
+      setIsApiKeySet(true);
+      setSnackbar({
+        open: true,
+        message: 'APIキーを保存しました',
+        severity: 'success',
+      });
     } catch (error) {
       console.error('APIキーの保存に失敗しました', error);
       setSnackbar({
         open: true,
         message: 'APIキーの保存に失敗しました',
         severity: 'error',
+      });
+    }
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+    if (isApiKeySet) {
+      setSnackbar({
+        open: true,
+        message: 'APIキーが変更されました。保存してください。',
+        severity: 'info',
       });
     }
   };
@@ -97,12 +111,23 @@ const Settings: React.FC = () => {
           設定
         </Typography>
         <Box sx={{ mt: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ mr: 2 }}>
+              OpenAI API Key
+            </Typography>
+            {isApiKeySet && (
+              <Chip
+                label="設定済み"
+                color="success"
+                size="small"
+              />
+            )}
+          </Box>
           <TextField
             fullWidth
-            label="OpenAI API Key"
             type={showApiKey ? 'text' : 'password'}
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={handleApiKeyChange}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">

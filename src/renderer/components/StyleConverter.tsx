@@ -37,7 +37,7 @@ const StyleConverter: React.FC = () => {
       const prompts = [
         {
           role: 'system' as const,
-          content: 'あなたは文章の文体を変換するAIアシスタントです。与えられた文章をビジネス文書に適した文体に変換してください。',
+          content: 'あなたは文章の文体を変換するAIアシスタントです。与えられた文章をビジネスメールに適した形にしてください。「お世話になっております。」から始まり、「よろしくお願いいたします。」で終わるようにしてください。',
         },
         {
           role: 'user' as const,

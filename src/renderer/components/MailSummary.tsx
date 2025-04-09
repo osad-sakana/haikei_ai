@@ -54,7 +54,7 @@ const MailSummary: React.FC = () => {
       const prompts = [
         {
           role: 'system' as const,
-          content: 'あなたはメールの要約を専門とするAIアシスタントです。与えられたメールの内容を簡潔に要約してください。',
+          content: 'あなたはメールの要約を専門とするAIアシスタントです。与えられたメールの内容を箇条書きにして、要約してください。',
         },
         {
           role: 'user' as const,

@@ -15,7 +15,7 @@ interface OpenAIPrompt {
 class OpenAIService {
   private config: OpenAIConfig = {
     apiKey: '',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
   };
 
   constructor() {

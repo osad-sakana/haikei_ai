@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { openAIService } from '../services/openai';
+import { createAppError, getErrorMessage } from '../utils/errorHandler';
 import {
   Box,
   Paper,
@@ -16,13 +17,11 @@ import {
 } from '@mui/material';
 import { ContentCopy, Summarize, Email } from '@mui/icons-material';
 
-// Electronオブジェクトの型定義
-declare global {
-  interface Window {
-    electron?: Electron;
-  }
-}
-
+/**
+ * メール要約コンポーネント
+ * メール本文を入力すると、AIを使用して要約を生成します。
+ * @returns メール要約コンポーネント
+ */
 const MailSummary: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -39,6 +38,10 @@ const MailSummary: React.FC = () => {
     severity: 'success',
   });
 
+  /**
+   * メール本文を要約する
+   * @returns Promise<void>
+   */
   const handleSummarize = async () => {
     if (!inputText.trim()) {
       setSnackbar({
@@ -65,10 +68,11 @@ const MailSummary: React.FC = () => {
       const result = await openAIService.generateText(prompts);
       setSummary(result);
     } catch (error) {
-      console.error('Failed to summarize:', error);
+      const appError = createAppError(error);
+      console.error('Failed to summarize:', appError);
       setSnackbar({
         open: true,
-        message: '要約の生成に失敗しました',
+        message: getErrorMessage(appError),
         severity: 'error',
       });
     } finally {
@@ -76,113 +80,66 @@ const MailSummary: React.FC = () => {
     }
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(summary);
-      setSnackbar({
-        open: true,
-        message: '要約をクリップボードにコピーしました',
-        severity: 'success',
-      });
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      setSnackbar({
-        open: true,
-        message: 'コピーに失敗しました',
-        severity: 'error',
-      });
-    }
-  };
-
+  /**
+   * スナックバーを閉じる
+   */
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  /**
+   * 要約結果をクリップボードにコピーする
+   */
+  const handleCopySummary = () => {
+    navigator.clipboard.writeText(summary);
+    setSnackbar({
+      open: true,
+      message: '要約をクリップボードにコピーしました',
+      severity: 'success',
+    });
+  };
+
   return (
-    <Box sx={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      p: { xs: 2, md: 4 },
-    }}>
-      <Paper elevation={3} sx={{ 
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        p: { xs: 2, md: 4 },
-      }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <Email color="primary" />
-          <Typography variant="h5" component="h2">
-            メール要約
-          </Typography>
-        </Stack>
-        <Box sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-          mt: 2,
-        }}>
-          <Box sx={{ flex: 1 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={isMobile ? 8 : 10}
-              label="メール本文"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="要約したいメール本文を入力してください"
-            />
-          </Box>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSummarize}
-              disabled={loading || !inputText.trim()}
-              startIcon={loading ? <CircularProgress size={20} /> : <Summarize />}
-            >
-              要約する
-            </Button>
-          </Box>
-          
+    <Box sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          メール要約
+        </Typography>
+        <Stack spacing={2}>
+          <TextField
+            label="メール本文"
+            multiline
+            rows={6}
+            fullWidth
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="要約したいメール本文を入力してください"
+          />
+          <Button
+            variant="contained"
+            onClick={handleSummarize}
+            disabled={loading || !inputText.trim()}
+            startIcon={loading ? <CircularProgress size={20} /> : <Summarize />}
+          >
+            {loading ? '要約中...' : '要約する'}
+          </Button>
           {summary && (
-            <Box sx={{ 
-              flex: 1,
-              position: 'relative',
-            }}>
-              <Paper variant="outlined" sx={{ p: 3 }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <Summarize color="primary" />
-                  <Typography variant="h6">
-                    要約結果
-                  </Typography>
-                </Stack>
-                <Typography
-                  component="div"
-                  sx={{ 
-                    whiteSpace: 'pre-line', 
-                    pt: 1,
-                  }}
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                要約結果
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 2, position: 'relative' }}>
+                <Typography>{summary}</Typography>
+                <IconButton
+                  onClick={handleCopySummary}
+                  sx={{ position: 'absolute', top: 8, right: 8 }}
                 >
-                  {summary}
-                </Typography>
+                  <ContentCopy />
+                </IconButton>
               </Paper>
-              <IconButton
-                onClick={handleCopy}
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                }}
-              >
-                <ContentCopy />
-              </IconButton>
             </Box>
           )}
-        </Box>
+        </Stack>
       </Paper>
       <Snackbar
         open={snackbar.open}
